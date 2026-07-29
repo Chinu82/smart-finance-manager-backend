@@ -12,8 +12,9 @@ import com.smart_finance_manager_backend.security.JwtUtil;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.security.SecureRandom;
 import java.time.LocalDateTime;
-import java.util.Random;
 
 @Service
 @Transactional
@@ -23,6 +24,7 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
     private final EmailService emailService;
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
     public UserService(UserRepository userRepository,
                        PasswordEncoder passwordEncoder,
@@ -39,7 +41,9 @@ public class UserService {
             throw new BadRequestException("Passwords do not match");
         }
 
-        if (userRepository.existsByEmail(registerDto.getEmail())) {
+        String email = registerDto.getEmail().trim().toLowerCase();
+
+        if (userRepository.existsByEmail(email)) {
             throw new BadRequestException("Email is already registered");
         }
 
@@ -49,13 +53,16 @@ public class UserService {
         }
 
         User user = User.builder()
-                .fullName(registerDto.getFullName())
+                .fullName(registerDto.getFullName().trim())
+                .phoneNumber(
+                        registerDto.getPhoneNumber() != null
+                                ? registerDto.getPhoneNumber().trim()
+                                : null
+                )
                 .email(registerDto.getEmail().toLowerCase().trim())
-                .phoneNumber(registerDto.getPhoneNumber())
                 .password(passwordEncoder.encode(registerDto.getPassword()))
                 .role(Role.USER)
-                .subscriptionPlan(registerDto.getSubscriptionPlan() != null
-                        ? registerDto.getSubscriptionPlan() : SubscriptionPlan.FREE)
+                .subscriptionPlan(SubscriptionPlan.FREE)
                 .emailVerified(false)
                 .phoneVerified(false)
                 .accountLocked(false)
@@ -69,7 +76,9 @@ public class UserService {
     }
 
     public AuthResponseDto login(LoginDto loginDto) {
-        User user = userRepository.findByEmail(loginDto.getEmail().toLowerCase().trim())
+        String email = loginDto.getEmail().trim().toLowerCase();
+
+        User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UnauthorizedException("Invalid email or password"));
 
         if (Boolean.FALSE.equals(user.getEnabled())) {
@@ -119,7 +128,9 @@ public class UserService {
         User user = userRepository.findByEmail(dto.getEmail().toLowerCase().trim())
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with this email"));
 
-        String otp = String.valueOf(100000 + new Random().nextInt(900000));
+        String otp = String.valueOf(
+                100000 + SECURE_RANDOM.nextInt(900000)
+        );
         user.setResetOtp(otp);
         user.setResetOtpExpiry(LocalDateTime.now().plusMinutes(15));
         userRepository.save(user);

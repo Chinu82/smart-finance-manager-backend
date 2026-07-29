@@ -27,31 +27,39 @@ public class User {
     @Column(nullable = false)
     private String fullName;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false, unique = true, length = 255)
     private String email;
 
-    @Column(unique = true)
+    @Column(unique = true, length = 13)
     private String phoneNumber;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 255)
     private String password;
 
+    @Builder.Default
     @Enumerated(EnumType.STRING)
-    private Role role;
-
-    @Enumerated(EnumType.STRING)
-    private SubscriptionPlan subscriptionPlan;
+    @Column(nullable = false)
+    private Role role = Role.USER;
 
     @Builder.Default
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private SubscriptionPlan subscriptionPlan = SubscriptionPlan.FREE;
+
+    @Builder.Default
+    @Column(nullable = false)
     private Boolean emailVerified = false;
 
     @Builder.Default
+    @Column(nullable = false)
     private Boolean phoneVerified = false;
 
     @Builder.Default
+    @Column(nullable = false)
     private Boolean accountLocked = false;
 
     @Builder.Default
+    @Column(nullable = false)
     private Boolean enabled = true;
 
     private String profileImage;
@@ -62,6 +70,9 @@ public class User {
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
+
+    @Column(length = 6)
     private String resetOtp;
+
     private LocalDateTime resetOtpExpiry;
 }
