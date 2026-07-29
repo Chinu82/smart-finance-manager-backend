@@ -155,7 +155,9 @@ public class UserService {
             throw new BadRequestException("Passwords do not match");
         }
 
-        User user = userRepository.findByEmail(dto.getEmail().toLowerCase().trim())
+        String email = dto.getEmail().trim().toLowerCase();
+
+        User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         if (user.getResetOtp() == null || !user.getResetOtp().equals(dto.getOtp())) {
